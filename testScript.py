@@ -21,6 +21,21 @@ d_4 = 0.109
 d_5 = 0.093
 d_6 = 0.082
 
+robot = rtb.DHRobot(
+    [
+        rtb.RevoluteMDH(alpha = 0.0     ,a = 0.0      ,d = d_1    ,offset = pi ),
+        rtb.RevoluteMDH(alpha = pi/2    ,a = 0.0      ,d = 0.0    ,offset = 0.0),
+        rtb.RevoluteMDH(alpha = 0.0     ,a = -a_2     ,d = 0.0    ,offset = 0.0),
+    ],
+    tool = SE3([
+    [0, 0, -1, -(a_3 + d_6)],
+    [0, 1, 0, -d_5],
+    [1, 0, 0, d_4],
+    [0, 0, 0, 1]]),
+    name = "3DOF_Robot"
+)
+print('Jacobe_check')
+print(robot.jacobe(q_init))
 #===========================================<ตรวจคำตอบข้อ 1>====================================================#
 #code here
 
