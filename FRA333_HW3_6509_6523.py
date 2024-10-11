@@ -7,31 +7,9 @@
 3.
 '''
 from HW3_utils import FKHW3
-from math import pi,sin,cos
+from math import pi
 import numpy as np
-from spatialmath import SE3
-d_1 = 0.0892
-a_2 = 0.425
-a_3 = 0.39243
-d_4 = 0.109
-d_5 = 0.093
-d_6 = 0.082
 
-q_init = [0.0, 0.0, 0.0]
-w_init = [0.0, 10.0, 0.0, 0.0, 0.0, 0.0] # force,moment
-# R,P,R_e,p_e = FKHW3(q_init)
-# print(len(R))
-# print(f'R:\n{R}')
-# print(f'R_e:\n{R_e}')
-# print(f'p_e:{p_e}')
-# print(f'P:\n{P}')
-# print(f'R_e_t:\n{R_e.transpose()}')
-# print(f'p_e:\n{p_e}')
-# for i in range(len(R)):
-#     R_i = R[:,:,i] #  เข้าถึง Rotation ของแต่ละ Joint (R[:,:,i] = เข้าถึง 2D ใน 3D เช่น จาก 3x3x4 เป็น 3x3)
-#     P_i = P[:,i] #  เข้าถึง Position ของแต่ละ Joint (P[:,i] = เข้าถึงแต่ละ colum ของ 2D เช่น จาก 3X3 เป็น 3X1)
-#     print(f'R_{1+i}:\n{R_i}')
-#     print(f'P_{1+i}:\n{P_i}')
 #=============================================<คำตอบข้อ 1>======================================================#
 #code here
 def endEffectorJacobianHW3(q:list[float])->list[float]:
@@ -62,8 +40,8 @@ def checkSingularityHW3(q:list[float])->bool:
 #=============================================<คำตอบข้อ 3>======================================================#
 #code here
 def computeEffortHW3(q:list[float], w:list[float])->list[float]:
-    J = endEffectorJacobianHW3(q)
-    J_Reduce_Trans = np.transpose(J)
+    J = np.array(endEffectorJacobianHW3(q))
+    J_Reduce_Trans = J.transpose()
     effort = J_Reduce_Trans @ w
     return effort
 #==============================================================================================================#

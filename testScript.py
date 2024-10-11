@@ -7,12 +7,14 @@
 3.
 '''
 from spatialmath import SE3
-from HW3_utils import FKHW3
-from math import pi
-from FRA333_HW3_6509_6523 import q_init,w_init,endEffectorJacobianHW3,checkSingularityHW3,computeEffortHW3
+from math import pi,hypot,cos,atan2
+from FRA333_HW3_6509_6523 import endEffectorJacobianHW3,checkSingularityHW3,computeEffortHW3
 
 import roboticstoolbox as rtb
 import numpy as np
+
+q_init = [0.0, 0.0, 0.0]
+w_init = [0.0, 10.0, 0.0, 0.0, 0.0, 0.0] # force x,y,z ,moment x,y,z
 
 d_1 = 0.0892
 a_2 = 0.425
@@ -37,9 +39,9 @@ robot = rtb.DHRobot(
 # robot.plot(q_init,block=True)
 #===========================================<ตรวจคำตอบข้อ 1>====================================================#
 #code here
-print('Jacob_sol')
+print('Jacob_HW3:')
 print(endEffectorJacobianHW3(q_init))
-print('Jacobe_check')
+print('Jacob_RTB:')
 print(robot.jacobe(q_init))
 #==============================================================================================================#
 #===========================================<ตรวจคำตอบข้อ 2>====================================================#
@@ -70,5 +72,12 @@ for i in q_list:
 #===========================================<ตรวจคำตอบข้อ 3>====================================================#
 #code here
 effort = computeEffortHW3(q_init,w_init)
-print(f'Effort: {effort}')
+print(f'Effort_HW3: {effort}')
+# ef0 = effort[0]/(a_2+a_3+d_6)
+# ef1 = effort[1]/(a_2+a_3+d_6)
+# ef2 = effort[2]/(a_3+d_6)
+# print(f'{ef0} + {ef1} + {ef2} = {ef0+ef1+ef2}')
+J = robot.jacobe(q_init)
+joint_efforts = np.dot(J.T, w_init)
+print(f'Effort_RTB: {joint_efforts}')
 #==============================================================================================================#
