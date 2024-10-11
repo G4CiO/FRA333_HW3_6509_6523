@@ -9,7 +9,7 @@
 from spatialmath import SE3
 from HW3_utils import FKHW3
 from math import pi
-from FRA333_HW3_6509_6523 import q_init
+from FRA333_HW3_6509_6523 import q_init,checkSingularityHW3
 
 import roboticstoolbox as rtb
 import numpy as np
@@ -34,17 +34,29 @@ robot = rtb.DHRobot(
     [0, 0, 0, 1]]),
     name = "3DOF_Robot"
 )
-print('Jacobe_check')
-print(robot.jacobe(q_init))
+q = [0.0,0.0,-pi]
+robot.plot(q,block=True)
+
+
+
+# print('FK_Check')
+# print(robot.fkine(q))
+# print('FK_TA')
+# R,P,R_e,p_e = FKHW3(q)
+# print(p_e)
 #===========================================<ตรวจคำตอบข้อ 1>====================================================#
 #code here
 
-
+print('Jacobe_check')
+print(robot.jacobe(q_init))
 
 #==============================================================================================================#
 #===========================================<ตรวจคำตอบข้อ 2>====================================================#
 #code here
-
+flag = checkSingularityHW3(q)
+print(f'Flag:{flag}')
+# J_linear = robot.jacobe(q_init)
+# print(np.linalg.det(J_linear))
 #==============================================================================================================#
 #===========================================<ตรวจคำตอบข้อ 3>====================================================#
 #code here
