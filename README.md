@@ -2,7 +2,32 @@
 ## เเสดงขั้นตอน เเนวคิดของการตรวจคำตอบเเละผลลัพธ์ของการตรวจสอบ
 สร้าง MDH Parameters จาก roboticstoolbox เพื่อเช็คกับคำตอบที่เราคำนวณเอง
 ![ภาพขนาดแขนกล](image.png)
-
+ระบุความยาวของ link ต่างๆ
+```py
+d_1 = 0.0892
+a_2 = 0.425
+a_3 = 0.39243
+d_4 = 0.109
+d_5 = 0.093
+d_6 = 0.082
+```
+หา MDH Parameters จาก roboticstoolbox
+```py
+robot = rtb.DHRobot(
+    [
+        rtb.RevoluteMDH(alpha = 0.0     ,a = 0.0      ,d = d_1    ,offset = pi ),
+        rtb.RevoluteMDH(alpha = pi/2    ,a = 0.0      ,d = 0.0    ,offset = 0.0),
+        rtb.RevoluteMDH(alpha = 0.0     ,a = -a_2     ,d = 0.0    ,offset = 0.0),
+    ],
+    tool = SE3([
+    [0, 0, -1, -(a_3 + d_6)],
+    [0, 1, 0, -d_5],
+    [1, 0, 0, d_4],
+    [0, 0, 0, 1]]),
+    name = "3DOF_Robot"
+)
+```
+แสดงตาราง MDH Parameters
 ```bash
 DHRobot: 3DOF_Robot, 3 joints (RRR), dynamics, modified DH parameters
 ┌────────┬───────┬────────────┬────────┐
@@ -64,7 +89,7 @@ def endEffectorJacobianHW3(q:list[float])->list[float]:
         J[3:, i] = R_e.transpose() @ Z_i # Add Angular Jacobian from row 4 to row 6
     return J
 ```
-นำคำตอบจากที่คำนวณเองมาเปรียบเทียบกัน
+นำคำตอบจากที่คำนวณเองมาเปรียบเทียบกับคำตอบที่ได้จาก robotictoolsbox
 ```py
 J_HW3 = endEffectorJacobianHW3(q_init)
 
@@ -96,3 +121,91 @@ Jacob_RTB:
 จะเห็นได้ว่าฟังก์ชัน jacobian ที่ได้จากคำนวณเองและจาก robotictoolsbox ตรงกัน **แสดงว่าฟังก์ชัน jacobian ที่ได้จากคำนวณเองถูกต้อง**
 
 ## ตรวจคำตอบข้อที่ 2
+ตรวจว่าฟังก์ชั่นในการหาสภาวะ Singularity ที่คำนวณเองนั้นสามารถตรวจว่าแขนกลอยู่ในตำแหน่งใกล้สภาวะ Singularity ได้หรือไม่ และเช็คว่า det ของ jacobian จากคำนวณเองและจาก robotictoolsbox ตรงกันหรือไม่
+
+**ฟังก์ชันเช็ค Singularity**
+```py
+def checkSingularityHW3(q:list[float])->bool:
+    J = endEffectorJacobianHW3(q)
+    J_linear = np.array(J[:3,:]) # ลดรูป jacobian ให้เหลือแค่ส่วนของ linear (3x3)
+    S = abs(np.linalg.det(J_linear)) # หาสภาวะ Singularity โดยการใส่ det ใน jacobian ที่ลดรูป และ absolute
+    print(f'Singularity: {S}')
+    if S < 0.001:
+        return 1 # ใกล้สภาวะ Singularity
+    else:
+        return 0 # สภาวะปกติ
+```
+สร้าง q config ที่ปกติ และที่ใกล้สภาวะ Singularity มาอย่างละ 3 ชุด โดยค่า q ที่ใกล้สภาวะ Singularity หาจากการเพิ่มค่า q อย่างคงที่โดยในขณะที่เพิ่มก็เช็คค่า det ของฟังก์ชัน jacobian ไปด้วยว่าน้อยกว่า 0.001 ตามที่โจทย์กำหนดหรือไม่
+```py
+# q ที่อยู่สภาวะปกติ
+q1 = [0.0, -pi/4, -pi/4]
+q2 = [0.0, 0.0, -pi/2]
+q3 = [0.0, pi/4, pi/2]
+# q ที่ใกล้ Singularity
+qs1 = [-1.91970470e-15, -8.35883143e-01, 2.80232546e+00]
+qs2 = [-0.24866892, 0.22598268, -0.19647569]
+qs3 = [1.70275090e-17, -1.71791355e-01, -1.95756090e-01]
+```
+ลอง plot ท่าทางของแขนกลของ q ต่างๆ
+![ภาพท่าทางของแขนกลของ q ต่างๆ](image2.png)
+นำคำตอบจากที่คำนวณเองมาเปรียบเทียบกับคำตอบที่ได้จาก robotictoolsbox
+```py
+q_list = [q1,q2,q3,qs1,qs2,qs3]
+print('-----------HW3-------------')
+for i in q_list:
+    flag = checkSingularityHW3(i)
+    print(f'Flag:{flag}')
+    # robot.plot(i,block=True) # ไว้ plot ดูท่าทางแขนกลของ q ต่างๆ
+print('-----------RTB-------------')
+for i in q_list:
+    J = robot.jacobe(i)
+    J_linear = np.array(J[:3,:])
+    S = abs(np.linalg.det(J_linear))
+    print(f'Singularity: {S}')
+    if S < 0.001:
+        print(f'Flag:{1}')
+    else:
+        print(f'Flag:{0}')
+```
+ได้คำตอบดังนี้
+```bash
+-----------HW3-------------
+Singularity: 0.04510825338063414
+Flag:0
+Singularity: 0.10444576450000001
+Flag:0
+Singularity: 0.020307082581866358
+Flag:0
+Singularity: 0.00048651388752052766
+Flag:1
+Singularity: 0.0005287293674209985
+Flag:1
+Singularity: 0.0004019232076573776
+Flag:1
+-----------RTB-------------
+Singularity: 0.0451082533806341
+Flag:0
+Singularity: 0.10444576450000001
+Flag:0
+Singularity: 0.020307083276948194
+Flag:0
+Singularity: 0.0004865138888846027
+Flag:1
+Singularity: 0.0005287293084899891
+Flag:1
+Singularity: 0.00040192318994076645
+Flag:1
+```
+จะเห็นได้ว่าเมื่อเช็คว่าแขนกลที่มีค่า q1, q2, q3 (3 บรรทัดแรก) ว่าใกล้ Singularity หรือไม่ พบว่าแขนกลไม่ใกล้สภาวะ Singularity เลย (Flag = 0) แต่เมื่อเช็คตอนแขนกลมีค่า qs1, qs2, qs3 (3 บรรทัดสุดท้าย) พบว่าแขนกลใกล้สภาวะ Singularity ทุกตัว (Flag = 1) ดังนั้นสรุปว่าฟังก์ชัน checkSingularityHW3 สามารถเช็คได้
+
+## ตรวจคำตอบข้อที่ 3
+ตรวจว่าฟังก์ชันในการหา effort ของแต่ละข้อต่อเมื่อมี wrench มากระทำกับจุดกึ่งกลางของเฟรมพิกัด Fe สามารถหาได้ตรงกับที่คำนวณจาก robotictoolsbox ได้หรือไม่ และเช็คโดยการคำนวณย้อนกลับว่าค่า effort (N*m) ที่ได้เมื่อหารระยะทางจาก p_e - q_i จะได้ force (N) เท่ากับที่ใส่ใน wrench หรือไม่
+
+**ฟังก์ชันหา effort**
+```py
+def computeEffortHW3(q:list[float], w:list[float])->list[float]:
+    J = np.array(endEffectorJacobianHW3(q))
+    J_Trans = J.transpose() # Transpose ฟังก์ชัน Jacobian
+    effort = J_Trans @ w # หา effort
+    return effort
+```
