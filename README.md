@@ -1,5 +1,5 @@
 # FRA333_HW3_6509_6523
-## ลง library ที่สำคัญ
+## ลง library roboticstoolbox
 **กรณีนี้เป็นการลงใน window**
 
 ลง visual studio build tools 2022 version ล่าสุดตาม [Link](https://visualstudio.microsoft.com/downloads/) นี้
