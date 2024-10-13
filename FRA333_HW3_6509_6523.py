@@ -14,7 +14,7 @@ def endEffectorJacobianHW3(q:list[float])->list[float]:
     # Forward Kinematic
     R,P,R_e,p_e = FKHW3(q)
     # create empty matrix for add Jacobian
-    J = np.zeros([6, len(q)]) # matrix 6x...
+    J = np.zeros([6, len(q)]) # matrix 6x3
     # Find Jacobian
     for i in range(len(q)):
         P_i = P[:,i] # Position from {0} to {i} 
