@@ -1,4 +1,18 @@
 # FRA333_HW3_6509_6523
+## ลง library ที่สำคัญ
+**กรณีนี้เป็นการลงใน window**
+
+ลง visual studio build tools 2022 version ล่าสุดตาม [Link](https://visualstudio.microsoft.com/downloads/) นี้
+
+down version numpy ให้ต่ำกว่า 2.x.x เพื่อใช้ roboticstoolbox โดยกรณีนี้จะ down ไปที่ 1.26.4
+```bash
+pip install numpy==1.26.4
+```
+
+ลง roboticstoolbox
+```bash
+pip install roboticstoolbox-python
+```
 ## เเสดงขั้นตอน เเนวคิดของการตรวจคำตอบเเละผลลัพธ์ของการตรวจสอบ
 สร้าง MDH Parameters จาก roboticstoolbox เพื่อเช็คกับคำตอบที่เราคำนวณเอง
 ![ภาพขนาดแขนกล](image/image1.png)
