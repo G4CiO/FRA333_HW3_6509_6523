@@ -80,6 +80,7 @@ FK ของ FKHW3
 ![สูตรฟังก์ชัน jacobian](image4.png)
 
 ซึ่งถ้าทำตามสูตรจะได้ jacobian ที่เทียบเฟรม 0 ดังนั้นต้องคูณ Rotation ที่เฟรม 0 เทียบเฟรม e กับส่วนของ linear jacobian และ angular jacobian เพื่อที่จะได้ jacobian ที่เทียบเฟรม e
+
 ![เปลี่ยนเฟรม jacobian](image5.png)
 
 โดย Rotation ที่เฟรม 0 เทียบเฟรม e หาจากเอา Rotation ที่เฟรม e เทียบเฟรม 0 มา transpose ดังภาพ
