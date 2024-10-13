@@ -21,7 +21,7 @@ DHRobot: 3DOF_Robot, 3 joints (RRR), dynamics, modified DH parameters
 จากนั้นประกาศตัวแปร q_init ที่เป็น joint config ต่างๆ และตัวแปร w_init ที่เป็น wrench ของแขนกล
 ```py
 q_init = [0.0, 0.0, 0.0] # [q1, q2, q3]
-w_init = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # [fx, fy, fz, Nx, Ny, Nz]
+w_init = [10.0, 0.0, 0.0, 0.0, 0.0, 0.0] # [fx, fy, fz, Nx, Ny, Nz]
 ```
 ต่อมาเช็คเพื่อความแน่ใจว่า FK ที่สร้างเองจาก roboticstoolbox กับ FK จาก FKHW3 ของทางผู้ผลิตตรงกันหรือไม่
 ```py
