@@ -46,7 +46,7 @@ DHRobot: 3DOF_Robot, 3 joints (RRR), dynamics, modified DH parameters
 จากนั้นประกาศตัวแปร q_init ที่เป็น joint config ต่างๆ และตัวแปร w_init ที่เป็น wrench ของแขนกล
 ```py
 q_init = [0.0, 0.0, 0.0] # [q1, q2, q3]
-w_init = [10.0, 0.0, 0.0, 0.0, 0.0, 0.0] # [fx, fy, fz, Nx, Ny, Nz]
+w_init = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # [fx, fy, fz, Nx, Ny, Nz]
 ```
 ต่อมาเช็คเพื่อความแน่ใจว่า FK ที่สร้างเองจาก roboticstoolbox กับ FK จาก FKHW3 ของทางผู้ผลิตตรงกันหรือไม่
 ```py
@@ -75,6 +75,18 @@ FK ของ FKHW3
 ตรวจว่าฟังก์ชั่น Jacobian ที่คำนวณเองนั้นตรงกับของ roboticstoolbox หรือไม่
 
 **ฟังก์ชั่น Jacobian ที่คำนวณเอง**
+
+โดยคำนวณจากสูตร
+![สูตรฟังก์ชัน jacobian](image4.png)
+
+ซึ่งถ้าทำตามสูตรจะได้ jacobian ที่เทียบเฟรม 0 ดังนั้นต้องคูณ Rotation ที่เฟรม 0 เทียบเฟรม e กับส่วนของ linear jacobian และ angular jacobian เพื่อที่จะได้ jacobian ที่เทียบเฟรม e
+![เปลี่ยนเฟรม jacobian](image5.png)
+
+โดย Rotation ที่เฟรม 0 เทียบเฟรม e หาจากเอา Rotation ที่เฟรม e เทียบเฟรม 0 มา transpose ดังภาพ
+
+![แปลงเฟรม R](image6.png)
+
+ซึ่งเขียนเป็นฟังก์ชันดังนี้
 ```py
 def endEffectorJacobianHW3(q:list[float])->list[float]:
     # Forward Kinematic
@@ -124,6 +136,12 @@ Jacob_RTB:
 ตรวจว่าฟังก์ชั่นในการหาสภาวะ Singularity ที่คำนวณเองนั้นสามารถตรวจว่าแขนกลอยู่ในตำแหน่งใกล้สภาวะ Singularity ได้หรือไม่ และเช็คว่า det ของ jacobian จากคำนวณเองและจาก robotictoolsbox ตรงกันหรือไม่
 
 **ฟังก์ชันเช็ค Singularity**
+
+จากสูตรใน Instruction
+
+![แปลงเฟรม R](image7.png)
+
+สามารถเขียนเป็นฟังก์ชันดังนี้
 ```py
 def checkSingularityHW3(q:list[float])->bool:
     J = endEffectorJacobianHW3(q)
@@ -148,6 +166,7 @@ qs3 = [1.70275090e-17, -1.71791355e-01, -1.95756090e-01]
 ```
 ลอง plot ท่าทางของแขนกลของ q ต่างๆ
 ![ภาพท่าทางของแขนกลของ q ต่างๆ](image2.png)
+
 นำคำตอบจากที่คำนวณเองมาเปรียบเทียบกับคำตอบที่ได้จาก robotictoolsbox
 ```py
 q_list = [q1,q2,q3,qs1,qs2,qs3]
@@ -159,14 +178,15 @@ for i in q_list:
 print('-----------RTB-------------')
 for i in q_list:
     J = robot.jacobe(i)
-    J_linear = np.array(J[:3,:])
-    S = abs(np.linalg.det(J_linear))
+    J_linear = np.array(J[:3,:]) # ลดรูป jacobian ให้เหลือแค่ส่วนของ linear (3x3)
+    S = abs(np.linalg.det(J_linear)) # หาสภาวะ Singularity โดยการใส่ det ใน jacobian ที่ลดรูป และ absolute
     print(f'Singularity: {S}')
     if S < 0.001:
-        print(f'Flag:{1}')
+        print(f'Flag:{1}') # ใกล้สภาวะ Singularity
     else:
-        print(f'Flag:{0}')
+        print(f'Flag:{0}') # สภาวะปกติ
 ```
+
 ได้คำตอบดังนี้
 ```bash
 -----------HW3-------------
@@ -202,6 +222,12 @@ Flag:1
 ตรวจว่าฟังก์ชันในการหา effort ของแต่ละข้อต่อเมื่อมี wrench มากระทำกับจุดกึ่งกลางของเฟรมพิกัด Fe สามารถหาได้ตรงกับที่คำนวณจาก robotictoolsbox ได้หรือไม่ และเช็คโดยการคำนวณย้อนกลับว่าค่า effort (N*m) ที่ได้เมื่อหารระยะทางจาก p_e - q_i จะได้ force (N) เท่ากับที่ใส่ใน wrench หรือไม่
 
 **ฟังก์ชันหา effort**
+
+จากสูตร
+
+![ภาพท่าทางของแขนกลของ q ต่างๆ](image8.png)
+
+จะสามารถเขียนฟังก์ชันได้ดังนี้
 ```py
 def computeEffortHW3(q:list[float], w:list[float])->list[float]:
     J = np.array(endEffectorJacobianHW3(q))
@@ -209,3 +235,42 @@ def computeEffortHW3(q:list[float], w:list[float])->list[float]:
     effort = J_Trans @ w # หา effort
     return effort
 ```
+โดย Jacobian ที่ใช้หา effort นั้นเป็น jacobian เทียบเฟรม e ดังนั้นไม่ต้องเปลี่ยนเฟรมของ force ที่ใส่เข้ามา (จากโจทย์เป็น force ที่เทียบเฟรม e)
+
+จากนั้นทำการตรวจว่าค่า effort ที่คำนวณเองตรงกับของ robotictoolsbox ไหม และตรวจว่า force จากการคำนวณย้อนกลับนั้นตรงกับ force ใน wrench ที่ใส่ไปหรือไม่
+```py
+effort_HW3 = computeEffortHW3(q_init,w_init) # ฟังก์ชันในการหา effort จากที่คำนวณเอง
+print(f'Effort_HW3: {effort_HW3}')
+# คำนวณย้อนกลับหา force ที่กระทำที่ปลายมือจาก effort ที่ได้
+ef0 = effort_HW3[0]/(a_2+a_3+d_6)
+ef1 = effort_HW3[1]/(a_2+a_3+d_6)
+ef2 = effort_HW3[2]/(a_3+d_6)
+print(f'f1: {ef0} N\nf2:{ef1} N\nf3:{ef2} N')
+# -----------------------------------------------------------
+J = robot.jacobe(q_init)
+effort_RTB = robot.pay(W=w_init,J=J) # ฟังก์ชันในการหา effort จาก robotictoolsbox
+print(f'Effort_RTB: {effort_RTB}')
+# คำนวณย้อนกลับหา force ที่กระทำที่ปลายมือจาก effort ที่ได้
+ef0 = effort_RTB[0]/(a_2+a_3+d_6)
+ef1 = effort_RTB[1]/(a_2+a_3+d_6)
+ef2 = effort_RTB[2]/(a_3+d_6)
+print(f'f1: {ef0} N\nf2:{ef1} N\nf3:{ef2} N')
+```
+ผลลัพธ์ที่ได้ เมื่อใส่ force ที่แกน x = 10 N
+(w_init = [10.0, 0.0, 0.0, 0.0, 0.0, 0.0]) จะเกิด effort ที่ q1 8.9943 N*m ซึ่งเมื่อนำ 8.9943/(a_2+a_3+d_6) ควรจะได้ force เท่ากับที่ใส่เข้าไป
+![ภาพที่ใส่แรงในแกน x 10 N](image3.png)
+```bash
+Effort_HW3: [ 8.9943 -0.     -0.    ]
+f1: 10.0 N
+f2:-5.490099070134735e-16 N
+f3:-4.922929083126703e-16 N
+Effort_RTB: [-8.9943  0.      0.    ]
+f1: -10.0 N
+f2:0.0 N
+f3:0.0 N
+```
+จากผลลัพธ์จะเห็นได้ว่า f1 ที่เป็น force ที่ได้จากการคำนวณกลับมีค่าเท่ากับ 10 N เมื่อตอนที่ใส่เข้าไปตอนแรก
+
+ส่วนค่า effort ที่ได้มาจาก robotictoolsbox ที่มีทิศทางตรงข้ามกับ effort ที่คำนวณเอง อาจเป็นผลลัพธ์ของ reaction force ทำให้ได้ทิศทางตรงกันข้ามกับ force ที่ใส่เข้าไป แต่ขนาดจะเท่ากันเสมอ
+
+ดังนั้นฟังก์ชันที่ไว้หา effort นี้สามารถหาได้จริง
